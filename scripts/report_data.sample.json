@@ -1,0 +1,239 @@
+{
+  "app_name": "BookShelf Reader (iOS)",
+  "footer": "iOS 定例会議 / 監視: Firebase Crashlytics",
+  "period": {
+    "start": "2026-05-25",
+    "end": "2026-05-31"
+  },
+  "kpi": {
+    "fatal_events": {
+      "scope": "上位10件合算",
+      "current": 248,
+      "previous": 231
+    },
+    "affected_users": {
+      "scope": "上位10件合算・重複含む",
+      "current": 205,
+      "previous": 219
+    },
+    "issue_count": {
+      "scope": "FATAL・上位",
+      "current": "10+",
+      "note": "主要 7 件を詳細化"
+    },
+    "fourth": {
+      "label": "NON-FATAL 件数",
+      "scope": "上位10件合算",
+      "current": 61432,
+      "previous": 84120
+    }
+  },
+  "summary_lines": [
+    "FATAL は上位合算で前週比 +7%（248 件）。影響ユーザーは -6% で改善。",
+    "最多の ImagePipeline_RecycledBitmap（閲覧中の画像描画）が 132→58 件へ大幅減。",
+    "一方、起動時の SecureKeyStore_GenerateKey が前週ランク外から 38 件へ新規急増。要調査。"
+  ],
+  "trend_chart": {
+    "labels": [
+      "RecycledBitmap",
+      "GenerateKey",
+      "DrmRelease",
+      "ListAdapter",
+      "ServiceBcast",
+      "TooLargeTx",
+      "ShelfRemove"
+    ],
+    "week_before_last": [
+      118,
+      null,
+      21,
+      13,
+      9,
+      null,
+      8
+    ],
+    "last_week": [
+      132,
+      null,
+      18,
+      12,
+      10,
+      null,
+      7
+    ],
+    "this_week": [
+      58,
+      38,
+      14,
+      11,
+      9,
+      9,
+      6
+    ],
+    "insight": "RecycledBitmap は3週連続で減少傾向。SecureKeyStore_GenerateKey と TooLargeTx は今週ランク外から新規上位入りで要注意。"
+  },
+  "issues": [
+    {
+      "id": 1,
+      "user_summary": "画像主体のページを表示中に落ちる",
+      "affected_users": 71,
+      "wow_change_pct": -8,
+      "ticket": null,
+      "status": "OPEN",
+      "tech": {
+        "class_method": "ImagePipeline.drawSampledBitmap(ImagePipeline.kt:412)",
+        "stack_summary": "Bitmap.checkRecycled → Bitmap.createScaledBitmap → ImagePipeline.drawToCanvas(288) → PageSurfaceView.onDraw(337)",
+        "repro": "固定レイアウトの閲覧で recycle 済み Bitmap を再利用。一部端末で観測。",
+        "notes": "前週 132→今週 58 で大幅減だが依然最多。旧版に集中。"
+      }
+    },
+    {
+      "id": 2,
+      "user_summary": "アプリを起動した直後に落ちる（鍵生成に失敗）",
+      "affected_users": 2,
+      "wow_change_pct": null,
+      "new": true,
+      "ticket": null,
+      "status": "OPEN",
+      "tech": {
+        "class_method": "SecureKeyStore.generateKey(SecureKeyStore.kt:145)",
+        "stack_summary": "KeyGenerator.generateKey → SecureKeyStoreSpi.engineGenerateKey → SecureKeyStore.generateKey(145) → App.onStart(81)",
+        "repro": "起動時の鍵生成で KeyStoreException。特定 OS/端末で発生。",
+        "notes": "前週ランク外→今週 38 件で新規急増。最新版の起動クラッシュ。"
+      }
+    },
+    {
+      "id": 3,
+      "user_summary": "本を閉じた後やバックグラウンド化時に落ちる",
+      "affected_users": 9,
+      "wow_change_pct": -22,
+      "ticket": null,
+      "status": "OPEN",
+      "tech": {
+        "class_method": "MediaController.release(MediaController.kt:1013)",
+        "stack_summary": "MediaController.release → RightsEnabler.destroy → decodeDataRead → unzip → SheetView.loadWithPriority",
+        "repro": "閲覧後のクローズ直後にストリーム参照。メモリ逼迫時に観測。",
+        "notes": "close 系の解放順。前週比 -22%。"
+      }
+    },
+    {
+      "id": 4,
+      "user_summary": "起動直後にアプリが落ちる（初期化系）",
+      "affected_users": 33,
+      "wow_change_pct": 12,
+      "ticket": null,
+      "status": "OPEN",
+      "tech": {
+        "class_method": "Personalizer.fetchProfile(Personalizer.kt:618)",
+        "stack_summary": "Personalizer.fetchProfile → MediaController.openUrl ×3 → Engine.create → Runtime.isPersonalized",
+        "repro": "起動時のパーソナライズ判定で深い再帰。長期更新ユーザーで観測。",
+        "notes": "+12%。特定バージョン後半のパターンを要調査。"
+      }
+    },
+    {
+      "id": 5,
+      "user_summary": "ビューアを素早く閉じると落ちる",
+      "affected_users": 18,
+      "wow_change_pct": 27,
+      "ticket": null,
+      "status": "OPEN",
+      "tech": {
+        "class_method": "MediaController.openUrl(MediaController.kt:1013)",
+        "stack_summary": "MediaController.openUrl → RightsEnabler.destroy → decodeDataRead → fread_buf → SheetView.loadWithPriority",
+        "repro": "閲覧中の素早いクローズで race。",
+        "notes": "Issue #3/#7 と同根の close race。"
+      }
+    },
+    {
+      "id": 6,
+      "user_summary": "本棚で整理・削除をした後に落ちる",
+      "affected_users": 6,
+      "wow_change_pct": 0,
+      "ticket": null,
+      "status": "OPEN",
+      "tech": {
+        "class_method": "ShelfStore.commitRemove(ShelfStore.kt:140)",
+        "stack_summary": "ListAdapter.bind → ShelfStore.commitRemove(140) → Transaction.commit → background workqueue",
+        "repro": "本棚の更新時に空リストアクセス。",
+        "notes": "横ばい。背景更新時の範囲チェック。"
+      }
+    },
+    {
+      "id": 7,
+      "user_summary": "試し読み本棚で「整理」して削除すると落ちる",
+      "affected_users": 5,
+      "wow_change_pct": 20,
+      "new": false,
+      "ticket": null,
+      "status": "OPEN",
+      "tech": {
+        "class_method": "MediaController.openUrl(SIGABRT)",
+        "stack_summary": "__cxa_deleted_virtual → MediaController.openUrl → RightsEnabler.destroy → decodeDataRead → SheetView.loadWithPriority",
+        "repro": "外部 deeplink で起動→前面/背面遷移→ビューア強制クローズ直後に race。",
+        "notes": "Issue #3 と同根の SIGABRT バリアント。前週比 10→6 で減少。"
+      }
+    }
+  ],
+  "version_chart": {
+    "available": false,
+    "title": "FATAL by app version (this week)",
+    "reason": "topVersions の集計が同期遅延で不完全（合算20件のみ）のため非表示"
+  },
+  "os_chart": {
+    "available": true,
+    "title": "FATAL by OS version (this week)",
+    "labels": [
+      "iOS 26.5.0",
+      "iPadOS 26.5.0",
+      "iOS 26.4.2",
+      "iOS 26.3.1",
+      "iOS 18.7.8"
+    ],
+    "values": [
+      161,
+      23,
+      18,
+      11,
+      9
+    ],
+    "note": "iOS 26.5.0 が大半。大画面端末の動線も考慮要。"
+  },
+  "actions": {
+    "top_priority": [
+      {
+        "title": "ビューアのクローズ × 非同期ロードの race を修正",
+        "detail": "MediaController.openUrl のハンドル寿命管理を最優先で修正。",
+        "issues": [
+          3,
+          5,
+          7
+        ]
+      },
+      {
+        "title": "起動時 鍵生成クラッシュ（新規急増）の握り込み",
+        "detail": "SecureKeyStore.generateKey の失敗時フォールバックを追加。",
+        "issues": [
+          2
+        ]
+      }
+    ],
+    "monitoring": [
+      {
+        "title": "ImagePipeline RecycledBitmap は大幅減・旧版に集中",
+        "detail": "",
+        "issues": [
+          1
+        ]
+      },
+      {
+        "title": "起動時パーソナライズ判定は横ばい",
+        "detail": "",
+        "issues": [
+          4
+        ]
+      }
+    ],
+    "footnote": "データソース: Firebase Crashlytics MCP（topIssues, topOperatingSystems, batchGetEvents）。前週比は上位件数ベース。"
+  },
+  "generated_at": "2026-06-01"
+}
