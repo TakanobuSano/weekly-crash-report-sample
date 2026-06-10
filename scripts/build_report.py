@@ -44,7 +44,7 @@ TREND_UP = "CC2936"     # 増加 = 悪化（赤）
 TREND_DOWN = "0B7A75"   # 減少 = 改善（ティール）
 
 # --- ブランドカラー ---
-# ブランド オレンジ（※仮の値。正式なカラーコードに差し替えるのはこの1行だけでよい）
+# ブランドアクセント色（※仮の値。正式なカラーコードに差し替えるのはこの1行だけでよい）
 BRAND_ACCENT = "FF7A00"
 
 BRAND = BRAND_ACCENT    # 表紙アクセント・各シート見出し・最優先カード
@@ -155,9 +155,12 @@ def add_textbox(slide, x, y, w, h, lines, align=PP_ALIGN.LEFT,
 
 
 def trend_text_and_color(pct):
-    """前週比(%)から矢印・表示文字列・色を決める。符号と矢印を必ず一致させる。"""
+    """前週比(%)から矢印・表示文字列・色を決める。符号と矢印を必ず一致させる。
+    JSON は AI が生成するため、float が来ても四捨五入して整数%として扱う。"""
     if pct is None:
         return "—", GRAY_TXT
+    if isinstance(pct, float):
+        pct = round(pct)
     if pct > 5:
         arrow, color = "↑", TREND_UP     # 増加=悪化なので赤
     elif pct < -5:
@@ -595,8 +598,9 @@ def slide_tech_details(prs, data, period_str):
         # 行高さをコンテンツ量から概算（はみ出し防止）
         row_heights = []
         for iss in chunk:
-            t = iss["tech"]
-            cells = [t["class_method"], t["stack_summary"], t["repro"], t["notes"]]
+            t = iss.get("tech", {})
+            cells = [t.get("class_method", ""), t.get("stack_summary", ""),
+                     t.get("repro", ""), t.get("notes", "")]
             lines = max(estimate_lines(c, w - 0.2, body_pt)
                         for c, w in zip(cells, col_w[1:]))
             row_heights.append(min(2.7, 0.25 + lines * 0.185))
@@ -610,13 +614,13 @@ def slide_tech_details(prs, data, period_str):
             fill_cell(table.cell(0, j), htxt, 11.5, bold=True, color="FFFFFF",
                       align=PP_ALIGN.CENTER)
         for i, iss in enumerate(chunk, start=1):
-            t = iss["tech"]
+            t = iss.get("tech", {})
             table.rows[i].height = Inches(row_heights[i - 1])
             fill_cell(table.cell(i, 0), iss["id"], body_pt, align=PP_ALIGN.CENTER)
-            fill_cell(table.cell(i, 1), t["class_method"], body_pt)
-            fill_cell(table.cell(i, 2), t["stack_summary"], body_pt)
-            fill_cell(table.cell(i, 3), t["repro"], body_pt)
-            fill_cell(table.cell(i, 4), t["notes"], body_pt)
+            fill_cell(table.cell(i, 1), t.get("class_method", ""), body_pt)
+            fill_cell(table.cell(i, 2), t.get("stack_summary", ""), body_pt)
+            fill_cell(table.cell(i, 3), t.get("repro", ""), body_pt)
+            fill_cell(table.cell(i, 4), t.get("notes", ""), body_pt)
 
 
 def is_light(hexstr):
