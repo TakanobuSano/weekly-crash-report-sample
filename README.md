@@ -3,7 +3,8 @@
 Claude Code / Claude Cowork で **Crashlytics の週次レポート（PowerPoint）を自動生成**する仕組みの、サニタイズ済みサンプルです。
 架空の電子書籍アプリ「BookShelf」を題材にしています。実在のアプリ・データとは関係ありません。
 
-関連記事: （Qiita 記事の URL をここに）
+関連記事: [AIにスライドを丸ごと作らせない —— Claude Code × Crashlytics 週次レポート自動生成の設計
+](https://qiita.com/4q_sano/items/5d188ee09e57ec6705cb)
 
 ## このサンプルの設計思想
 
